@@ -2,14 +2,14 @@
 ; linux_alt_f4.asm
 ; Simulates Alt + F4 and Enter keypress using X11
 
+; linux_alt_f4_with_timer.asm
+; Adds a timer to delay execution for up to 5 minutes (adjustable)
+
 section .data
-    display db 0                ; Pointer to X11 display structure (NULL initially)
-    keysym_alt dq 0xffe9        ; Keysym for Alt (Left Alt: XK_Alt_L)
-    keysym_f4 dq 0xffc1         ; Keysym for F4
-    keysym_enter dq 0xff0d      ; Keysym for Enter
+    delay_seconds dq 180        ; Set the delay time here (in seconds, e.g., 180 = 3 minutes)
 
 section .bss
-    display_ptr resq 1          ; Reserve space for Display pointer
+    display_ptr resq 1          ; Reserve space for the Display pointer
 
 section .text
 global _start
@@ -22,6 +22,10 @@ extern XCloseDisplay
 extern sleep
 
 _start:
+    ; Delay the script execution
+    mov rdi, [delay_seconds]    ; Number of seconds to delay
+    call sleep
+
     ; Open X11 display
     mov rdi, 0                  ; Pass NULL to XOpenDisplay (default display)
     call XOpenDisplay
@@ -32,39 +36,39 @@ _start:
 main_loop:
     ; Simulate Alt key down
     mov rdi, [display_ptr]      ; Display pointer
-    mov rsi, [keysym_alt]       ; Alt keysym
+    mov rsi, 0xffe9             ; Alt key keysym (XK_Alt_L)
     call simulate_key_down
 
     ; Simulate F4 key down
     mov rdi, [display_ptr]
-    mov rsi, [keysym_f4]        ; F4 keysym
+    mov rsi, 0xffc1             ; F4 key keysym (XK_F4)
     call simulate_key_down
 
     ; Simulate F4 key up
     mov rdi, [display_ptr]
-    mov rsi, [keysym_f4]
+    mov rsi, 0xffc1
     call simulate_key_up
 
     ; Simulate Alt key up
     mov rdi, [display_ptr]
-    mov rsi, [keysym_alt]
+    mov rsi, 0xffe9
     call simulate_key_up
 
     ; Simulate Enter key down
     mov rdi, [display_ptr]
-    mov rsi, [keysym_enter]     ; Enter keysym
+    mov rsi, 0xff0d             ; Enter key keysym (XK_Return)
     call simulate_key_down
 
     ; Simulate Enter key up
     mov rdi, [display_ptr]
-    mov rsi, [keysym_enter]
+    mov rsi, 0xff0d
     call simulate_key_up
 
     ; Flush X11 event queue
     mov rdi, [display_ptr]
     call XFlush
 
-    ; Delay (sleep 1 second)
+    ; Delay (sleep 1 second between iterations)
     mov rdi, 1                  ; Sleep for 1 second
     call sleep
 
